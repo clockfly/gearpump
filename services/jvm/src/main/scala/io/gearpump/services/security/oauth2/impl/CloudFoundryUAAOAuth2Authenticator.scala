@@ -53,9 +53,9 @@ import sun.misc.BASE64Encoder
  * 4) Create a new Application (Client) in UAA,
  * {{{
  *   uaac client add [your_client_id]
- *     --scope openid
+ *     --scope "openid cloud_controller.read"
  *     --authorized_grant_types "authorization_code client_credentials refresh_token"
- *     --authorities openid
+ *     --authorities "openid cloud_controller.read"
  *     --redirect_uri [your_redirect_url]
  *     --autoapprove true
  *     --secret [your_client_secret]
@@ -87,7 +87,7 @@ class CloudFoundryUAAOAuth2Authenticator extends BaseOAuth2Authenticator {
 
   protected override def protectedResourceUrl: String = s"$host/userinfo"
 
-  protected override def scope: String = "openid"
+  protected override def scope: String = "openid,cloud_controller.read"
 
   override def init(config: Config): Unit = {
     host = config.getString("uaahost")
