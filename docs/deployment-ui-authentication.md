@@ -218,12 +218,16 @@ To use Google OAuth2 Authenticator, there are several steps:
 #### Step1: Register your application to UAA with `uaac`
 
 1. Check tutorial on uaac at [https://docs.cloudfoundry.org/adminguide/uaa-user-management.html](https://docs.cloudfoundry.org/adminguide/uaa-user-management.html)
-2. Open a bash shell, and login in as user admin by
+2. Open a bash shell, set the UAA server by command `uaac target`
+    ```
+      uaac target [your uaa server url]
+    ```
+3. Login in as user admin by
 
    ```
      uaac token client get admin -s MyAdminPassword
    ```
-3. Create a new Application (Client) in UAA,
+4. Create a new Application (Client) in UAA,
    ```
     uaac client add [your_client_id]
       --scope openid

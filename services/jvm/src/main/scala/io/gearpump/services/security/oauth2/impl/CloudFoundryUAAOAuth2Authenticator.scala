@@ -41,11 +41,16 @@ import sun.misc.BASE64Encoder
  *
  * Step1: Register your website to UAA with tool uaac.
  * 1) Check tutorial on uaac at [[https://docs.cloudfoundry.org/adminguide/uaa-user-management.html]]
- * 2) Open a bash shell, and login in as user admin by
+ * 2) Open a bash shell, set the UAA server by command `uaac target`
+ * {{{
+ *   uaac target [your uaa server url]
+ * }}}
+ * NOTE: [your uaa server url] should match the uaahost settings in gear.conf
+ * 3) Login in as user admin by
  * {{{
  *    uaac token client get admin -s MyAdminPassword
  * }}}
- * 3) Create a new Application (Client) in UAA,
+ * 4) Create a new Application (Client) in UAA,
  * {{{
  *   uaac client add [your_client_id]
  *     --scope openid
@@ -63,7 +68,7 @@ import sun.misc.BASE64Encoder
  * 3) Config gear.conf "gearpump.ui-security.oauth2-authenticators.cloudfoundryuaa" section.
  * Please make sure class name, client ID, client Secret, and callback URL are set properly.
  *
- * @note The callback URL here should matche what you set on CloudFoundry UAA in step1.
+ * @note The callback URL here should match what you set on CloudFoundry UAA in step1.
  *
  * Step3: Restart the UI service and try the "social login" button for UAA.
  *
