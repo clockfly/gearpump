@@ -33,6 +33,7 @@ import spray.json.{JsString, _}
 import sun.misc.BASE64Encoder
 
 import scala.concurrent.{Promise, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  *
