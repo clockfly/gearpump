@@ -27,13 +27,11 @@ import com.typesafe.config.Config
 import io.gearpump.services.SecurityService.UserSession
 import io.gearpump.services.security.oauth2.OAuth2Authenticator
 import io.gearpump.services.security.oauth2.impl.BaseOAuth2Authenticator.BaseApi20
-import io.gearpump.services.security.oauth2.impl.CloudFoundryUAAOAuth2Authenticator.CloudFoundryUAAService
 import io.gearpump.util.Constants._
 import spray.json.{JsString, _}
 import sun.misc.BASE64Encoder
 
-import scala.concurrent.{Promise, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Promise, Future}
 
 /**
  *
@@ -100,9 +98,9 @@ class CloudFoundryUAAOAuth2Authenticator extends BaseOAuth2Authenticator {
 
   private var additionalAuthenticator: Option[AdditionalAuthenticator] = None
 
-  override def init(config: Config): Unit = {
+  override def init(config: Config, executionContext: ExecutionContext): Unit = {
     host = config.getString("uaahost")
-    super.init(config)
+    super.init(config, executionContext)
 
     if (config.getBoolean(ADDITIONAL_AUTHENTICATOR_ENABLED)) {
       val additionalAuthenticatorConfig = config.getConfig(ADDITIONAL_AUTHENTICATOR)
@@ -126,7 +124,7 @@ class CloudFoundryUAAOAuth2Authenticator extends BaseOAuth2Authenticator {
 
   protected override def authenticateWithAccessToken(accessToken: OAuth2AccessToken): Future[UserSession] = {
 
-    Console.println("Access TOKEN: " + accessToken.getAccessToken)
+    implicit val ec: ExecutionContext = executionContext
 
     if (additionalAuthenticator.isDefined) {
       super.authenticateWithAccessToken(accessToken).flatMap{user =>

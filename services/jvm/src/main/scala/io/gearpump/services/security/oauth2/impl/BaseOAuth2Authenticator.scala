@@ -35,9 +35,8 @@ import io.gearpump.util.Constants._
 import io.gearpump.util.Util
 
 import scala.collection.mutable.StringBuilder
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Uses Ning AsyncClient to connect to OAuth2 service.
@@ -68,10 +67,12 @@ abstract class BaseOAuth2Authenticator extends OAuth2Authenticator {
 
   protected var oauthService: OAuth20Service = null
 
+  protected var executionContext: ExecutionContext = null
+
   private var defaultPermissionLevel = Authenticator.Guest.permissionLevel
 
   // Synchronization ensured by the caller
-  override def init(config: Config): Unit = {
+  override def init(config: Config, executionContext: ExecutionContext): Unit = {
     if (this.oauthService == null) {
       val callback = config.getString(GEARPUMP_UI_OAUTH2_AUTHENTICATOR_CALLBACK)
       val clientId = config.getString(GEARPUMP_UI_OAUTH2_AUTHENTICATOR_CLIENT_ID)
@@ -86,6 +87,7 @@ abstract class BaseOAuth2Authenticator extends OAuth2Authenticator {
         }
       }
       this.oauthService = buildOAuth2Service(clientId, clientSecret, callback)
+      this.executionContext = executionContext
     }
   }
 
@@ -129,6 +131,8 @@ abstract class BaseOAuth2Authenticator extends OAuth2Authenticator {
   }
 
   protected def authenticateWithAuthorizationCode(code: String): Future[UserSession] = {
+
+    implicit val ec: ExecutionContext = executionContext
 
     val promise = Promise[UserSession]()
     oauthService.getAccessTokenAsync(code,
@@ -185,6 +189,7 @@ abstract class BaseOAuth2Authenticator extends OAuth2Authenticator {
 
     service
   }
+
 }
 
 object BaseOAuth2Authenticator {
