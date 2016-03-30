@@ -50,8 +50,11 @@ class CloudFoundryUAAOAuth2AuthenticatorSpec extends FlatSpec with ScalatestRout
 
   val configString = ConfigFactory.parseMap(configMap.asJava)
 
-  private val uaa = new CloudFoundryUAAOAuth2Authenticator
-  uaa.init(configString)
+  lazy val uaa = {
+    val uaa = new CloudFoundryUAAOAuth2Authenticator
+    uaa.init(configString, system.dispatcher)
+    uaa
+  }
 
   it should "generate the correct authorization request" in {
     val parameters = Uri(uaa.getAuthorizationUrl()).query().toMap
