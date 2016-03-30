@@ -107,7 +107,7 @@ class CloudFoundryUAAOAuth2Authenticator extends BaseOAuth2Authenticator {
       val authenticatorClass = additionalAuthenticatorConfig.getString(GEARPUMP_UI_OAUTH2_AUTHENTICATOR_CLASS)
       val clazz = Thread.currentThread().getContextClassLoader.loadClass(authenticatorClass)
       val authenticator = clazz.newInstance().asInstanceOf[AdditionalAuthenticator]
-      authenticator.init(additionalAuthenticatorConfig)
+      authenticator.init(additionalAuthenticatorConfig, executionContext)
       additionalAuthenticator = Option(authenticator)
     }
   }
@@ -174,12 +174,17 @@ object CloudFoundryUAAOAuth2Authenticator {
     }
   }
 
+  /**
+   * Additional authenticator to check more credential attributes of user before logging in.
+   * This authenticator is applied AFTER user pass the initial (default) authenticator.
+   */
   trait AdditionalAuthenticator {
 
     /**
      * @param config configurations specifically used for this authenticator.
+     * @param executionContext execution Context to use to run futures.
      */
-    def init(config: Config): Unit
+    def init(config: Config, executionContext: ExecutionContext): Unit
 
     /**
      *
@@ -190,14 +195,15 @@ object CloudFoundryUAAOAuth2Authenticator {
     def authenticate(asyncClient: AsyncHttpClient, accessToken: OAuth2AccessToken, user: UserSession): Future[UserSession]
   }
 
-
   val ORGANIZATION_URL = "organization-url"
 
   class OrganizationAccessChecker extends AdditionalAuthenticator {
     private var organizationUrl: String = null
+    private implicit var executionContext: ExecutionContext = null
 
-    override def init(config: Config): Unit = {
+    override def init(config: Config, executionContext: ExecutionContext): Unit = {
       this.organizationUrl = config.getString(ORGANIZATION_URL)
+      this.executionContext = executionContext
     }
 
     override def authenticate(asyncClient: AsyncHttpClient, accessToken: OAuth2AccessToken,

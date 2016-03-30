@@ -193,7 +193,7 @@ class SecurityService(inner: RouteService, implicit val system: ActorSystem) ext
         // Support OAUTH Authentication
         pathPrefix ("oauth2"/ Segment) {providerName =>
         // Resolve OAUTH Authentication Provider
-        val oauthService = OAuth2Authenticator.get(config, providerName)
+        val oauthService = OAuth2Authenticator.get(config, providerName, ec)
 
           if (oauthService == null) {
             // OAuth2 is disabled.
