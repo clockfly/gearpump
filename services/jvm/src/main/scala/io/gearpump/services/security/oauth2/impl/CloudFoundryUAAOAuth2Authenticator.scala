@@ -125,6 +125,9 @@ class CloudFoundryUAAOAuth2Authenticator extends BaseOAuth2Authenticator {
   }
 
   protected override def authenticateWithAccessToken(accessToken: OAuth2AccessToken): Future[UserSession] = {
+
+    Console.println("Access TOKEN: " + accessToken.getAccessToken)
+
     if (additionalAuthenticator.isDefined) {
       super.authenticateWithAccessToken(accessToken).flatMap{user =>
         additionalAuthenticator.get.authenticate(oauthService.getAsyncHttpClient, accessToken, user)

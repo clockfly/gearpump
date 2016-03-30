@@ -36,6 +36,8 @@ import io.gearpump.util.Util
 
 import scala.collection.mutable.StringBuilder
 import scala.concurrent.{Future, Promise}
+import scala.util.{Failure, Success}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Uses Ning AsyncClient to connect to OAuth2 service.
@@ -133,7 +135,10 @@ abstract class BaseOAuth2Authenticator extends OAuth2Authenticator {
 
       new OAuthAsyncRequestCallback[OAuth2AccessToken] {
         override def onCompleted(accessToken: OAuth2AccessToken): Unit = {
-          authenticateWithAccessToken(accessToken)
+          authenticateWithAccessToken(accessToken).onComplete{
+            case Success(user) => promise.success(user)
+            case Failure(ex) => promise.failure(ex)
+          }
         }
 
         override def onThrowable(throwable: Throwable): Unit = {
