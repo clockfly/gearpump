@@ -256,6 +256,14 @@ For guide of how to configure web proxy for UI server, please refer to please re
 
 #### Step4: Restart the UI server and try to click the CloudFoundry login icon on UI server.
 
+#### Step5: You can also enable additional authenticator for CloudFoundry UAA by setting config:
+
+```
+additional-authenticator-enabled = true
+```
+
+Please see description in gear.conf for more information.
+
 #### Extends OAuth2Authenticator to support new Authorization service like Facebook, or Twitter.
 
 You can follow the Google OAuth2 example code to define a custom OAuth2Authenticator. Basically, the steps includes:

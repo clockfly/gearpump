@@ -19,14 +19,20 @@
 package io.gearpump.services.security.oauth2.impl
 
 import com.github.scribejava.core.builder.api.DefaultApi20
-import com.github.scribejava.core.model.{AbstractRequest, OAuthConfig, OAuthConstants}
+import com.github.scribejava.core.model._
 import com.github.scribejava.core.oauth.OAuth20Service
+import com.ning.http.client
+import com.ning.http.client.{AsyncCompletionHandler, AsyncHttpClient}
 import com.typesafe.config.Config
+import io.gearpump.services.SecurityService.UserSession
 import io.gearpump.services.security.oauth2.OAuth2Authenticator
 import io.gearpump.services.security.oauth2.impl.BaseOAuth2Authenticator.BaseApi20
 import io.gearpump.services.security.oauth2.impl.CloudFoundryUAAOAuth2Authenticator.CloudFoundryUAAService
+import io.gearpump.util.Constants._
 import spray.json.{JsString, _}
 import sun.misc.BASE64Encoder
+
+import scala.concurrent.{Promise, Future}
 
 /**
  *
@@ -79,6 +85,8 @@ import sun.misc.BASE64Encoder
  */
 class CloudFoundryUAAOAuth2Authenticator extends BaseOAuth2Authenticator {
 
+  import CloudFoundryUAAOAuth2Authenticator._
+
   private var host: String = null
 
   protected override def authorizeUrl: String = s"$host/oauth/authorize?response_type=%s&client_id=%s&redirect_uri=%s&scope=%s"
@@ -89,9 +97,20 @@ class CloudFoundryUAAOAuth2Authenticator extends BaseOAuth2Authenticator {
 
   protected override def scope: String = "openid,cloud_controller.read"
 
+  private var additionalAuthenticator: Option[AdditionalAuthenticator] = None
+
   override def init(config: Config): Unit = {
     host = config.getString("uaahost")
     super.init(config)
+
+    if (config.getBoolean(ADDITIONAL_AUTHENTICATOR_ENABLED)) {
+      val additionalAuthenticatorConfig = config.getConfig(ADDITIONAL_AUTHENTICATOR)
+      val authenticatorClass = additionalAuthenticatorConfig.getString(GEARPUMP_UI_OAUTH2_AUTHENTICATOR_CLASS)
+      val clazz = Thread.currentThread().getContextClassLoader.loadClass(authenticatorClass)
+      val authenticator = clazz.newInstance().asInstanceOf[AdditionalAuthenticator]
+      authenticator.init(additionalAuthenticatorConfig)
+      additionalAuthenticator = Option(authenticator)
+    }
   }
 
   protected override def extractUserName(body: String): String = {
@@ -103,10 +122,23 @@ class CloudFoundryUAAOAuth2Authenticator extends BaseOAuth2Authenticator {
   protected override def oauth2Api(): DefaultApi20 = {
     new CloudFoundryUAAService(authorizeUrl, accessTokenEndpoint)
   }
+
+  protected override def authenticateWithAccessToken(accessToken: OAuth2AccessToken): Future[UserSession] = {
+    if (additionalAuthenticator.isDefined) {
+      super.authenticateWithAccessToken(accessToken).flatMap{user =>
+        additionalAuthenticator.get.authenticate(oauthService.getAsyncHttpClient, accessToken, user)
+      }
+    } else {
+      super.authenticateWithAccessToken(accessToken)
+    }
+  }
 }
 
 object CloudFoundryUAAOAuth2Authenticator {
   private val RESPONSE_TYPE = "response_type"
+
+  val ADDITIONAL_AUTHENTICATOR_ENABLED = "additional-authenticator-enabled"
+  val ADDITIONAL_AUTHENTICATOR = "additional-authenticator"
 
   private class CloudFoundryUAAService(authorizeUrl: String, accessTokenEndpoint: String)
     extends BaseApi20(authorizeUrl, accessTokenEndpoint) {
@@ -137,6 +169,51 @@ object CloudFoundryUAAOAuth2Authenticator {
           request
         }
       }
+    }
+  }
+
+  trait AdditionalAuthenticator {
+
+    /**
+     * @param config configurations specifically used for this authenticator.
+     */
+    def init(config: Config): Unit
+
+    /**
+     *
+     * @param accessToken, the accessToken for the UAA
+     * @param user user session returned by previous authenticator
+     * @return an updated UserSession
+     */
+    def authenticate(asyncClient: AsyncHttpClient, accessToken: OAuth2AccessToken, user: UserSession): Future[UserSession]
+  }
+
+
+  val ORGANIZATION_URL = "organization-url"
+
+  class OrganizationAccessChecker extends AdditionalAuthenticator {
+    private var organizationUrl: String = null
+
+    override def init(config: Config): Unit = {
+      this.organizationUrl = config.getString(ORGANIZATION_URL)
+    }
+
+    override def authenticate(asyncClient: AsyncHttpClient, accessToken: OAuth2AccessToken,
+        user: UserSession): Future[UserSession] = {
+
+      val promise = Promise[UserSession]()
+      val builder = asyncClient.prepareGet(organizationUrl)
+      builder.addHeader("Authorization", s"bearer ${accessToken.getAccessToken}")
+      builder.execute(new AsyncCompletionHandler[Unit] {
+        override def onCompleted(response: client.Response): Unit = {
+          if (response.getStatusCode == 200) {
+            promise.success(user)
+          } else {
+            promise.failure(new Exception(response.getResponseBody))
+          }
+        }
+      })
+      promise.future
     }
   }
 }
