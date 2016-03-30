@@ -109,6 +109,8 @@ abstract class BaseOAuth2Authenticator extends OAuth2Authenticator {
 
     def authenticateWithAccessToken(accessToken: OAuth2AccessToken): Unit = {
 
+      Console.println("Access token " + accessToken.getAccessToken)
+
       val request = new OAuthRequestAsync(Verb.GET, protectedResourceUrl, oauthService)
       oauthService.signRequest(accessToken, request)
       request.sendAsync {
