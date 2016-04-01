@@ -40,6 +40,8 @@ import io.gearpump.transport.HostPort
 import io.gearpump.util.Constants._
 import io.gearpump.util.HistoryMetricsService.HistoryMetricsConfig
 import io.gearpump.util._
+import io.gearpump.WorkerId
+
 import org.apache.commons.lang.exception.ExceptionUtils
 import org.slf4j.Logger
 
@@ -109,6 +111,8 @@ private[cluster] class Master extends Actor with Stash {
     case GetKVSuccess(_, result) =>
       if(result != null) {
         this.nextWorkerId = result.asInstanceOf[Int]
+      } else {
+        LOG.warn("Cannot find existing state in the distributed cluster...")
       }
       context.become(receiveHandler)
       unstashAll()
@@ -132,9 +136,10 @@ private[cluster] class Master extends Actor with Stash {
 
   def workerMsgHandler : Receive = {
     case RegisterNewWorker =>
-      val workerId = nextWorkerId
+      val workerId = WorkerId(nextWorkerId, System.currentTimeMillis())
       nextWorkerId += 1
       kvService ! PutKV(MASTER_GROUP, WORKER_ID, nextWorkerId)
+
       self forward RegisterWorker(workerId)
 
     case RegisterWorker(id) =>

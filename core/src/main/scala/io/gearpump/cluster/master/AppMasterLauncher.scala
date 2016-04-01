@@ -22,6 +22,7 @@ import java.util.concurrent.{TimeUnit, TimeoutException}
 
 import akka.actor.{Actor, ActorRef, Props, _}
 import com.typesafe.config.Config
+import io.gearpump.WorkerId
 import io.gearpump.cluster.{AppJar, AppDescription}
 import io.gearpump.cluster.AppMasterToMaster.RequestResource
 import io.gearpump.cluster.AppMasterToWorker.{LaunchExecutor, ShutdownExecutor}
@@ -59,7 +60,7 @@ class AppMasterLauncher(
   val appMasterAkkaConfig: Config = app.clusterConfig
 
   LOG.info(s"Ask Master resource to start AppMaster $appId...")
-  master ! RequestResource(appId, ResourceRequest(Resource(1)))
+  master ! RequestResource(appId, ResourceRequest(Resource(1), WorkerId.unspecified))
 
   def receive : Receive = waitForResourceAllocation
 
@@ -91,7 +92,7 @@ class AppMasterLauncher(
     case ExecutorLaunchRejected(reason, ex) =>
       LOG.error(s"Executor Launch failed reason：$reason", ex)
       LOG.info(s"reallocate resource $resource to start appmaster")
-      master ! RequestResource(appId, ResourceRequest(resource))
+      master ! RequestResource(appId, ResourceRequest(resource, WorkerId.unspecified))
       context.become(waitForResourceAllocation)
     case RegisterActorSystem(systemPath) =>
       LOG.info(s"Received RegisterActorSystem $systemPath for AppMaster")
