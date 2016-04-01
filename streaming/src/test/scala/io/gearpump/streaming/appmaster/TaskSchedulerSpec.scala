@@ -48,7 +48,7 @@ class TaskSchedulerSpec extends WordSpec with Matchers {
 
       val localities = Localities(
         Map(WorkerId(1, 0L) -> Array(TaskId(0,0), TaskId(0,1), TaskId(1,0), TaskId(1,1)),
-          WorkerId(1, 0L) -> Array(TaskId(0,2), TaskId(0,3))
+          WorkerId(2, 0L) -> Array(TaskId(0,2), TaskId(0,3))
       ))
 
       val localityConfig = ConfigFactory.parseString(Localities.toJson(localities))
