@@ -66,7 +66,7 @@ private[cluster] class Master extends Actor with Stash {
 
   private var scheduler : ActorRef = null
 
-  private var workers = new immutable.HashMap[ActorRef, Int]
+  private var workers = new immutable.HashMap[ActorRef, WorkerId]
 
   private val birth = System.currentTimeMillis()
 
@@ -295,7 +295,7 @@ object Master {
 
   final val WORKER_ID = "next_worker_id"
 
-  case class WorkerTerminated(workerId: Int)
+  case class WorkerTerminated(workerId: WorkerId)
 
   case class MasterInfo(master: ActorRef, startTime : Long = 0L)
 
