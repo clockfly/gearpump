@@ -19,6 +19,7 @@ package io.gearpump.cluster.scheduler
 
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
+import io.gearpump.WorkerId
 import io.gearpump.cluster.AppMasterToMaster.RequestResource
 import io.gearpump.cluster.MasterToAppMaster.ResourceAllocated
 import io.gearpump.cluster.MasterToWorker.{UpdateResourceFailed, WorkerRegistered}
@@ -36,8 +37,8 @@ class PrioritySchedulerSpec(_system: ActorSystem) extends TestKit(_system) with 
 
   def this() = this(ActorSystem("PrioritySchedulerSpec",  TestUtil.DEFAULT_CONFIG))
   val appId = 0
-  val workerId1 = 1
-  val workerId2 = 2
+  val workerId1: WorkerId = WorkerId(1, 0L)
+  val workerId2: WorkerId = WorkerId(2, 0L)
   val mockAppMaster = TestProbe()
   val mockWorker1 = TestProbe()
   val mockWorker2 = TestProbe()

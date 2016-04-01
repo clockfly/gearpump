@@ -20,7 +20,7 @@ package io.gearpump.cluster
 
 import akka.actor.ActorRef
 import com.typesafe.config.Config
-import io.gearpump.TimeStamp
+import io.gearpump.{WorkerId, TimeStamp}
 import io.gearpump.cluster.MasterToAppMaster.AppMasterStatus
 import io.gearpump.cluster.master.MasterSummary
 import io.gearpump.cluster.scheduler.{Resource, ResourceAllocation, ResourceRequest}
@@ -181,7 +181,7 @@ object MasterToAppMaster {
 
   case class ReplayFromTimestampWindowTrailingEdge(appId: Int)
 
-  case class WorkerList(workers: List[Int])
+  case class WorkerList(workers: List[WorkerId])
 }
 
 object AppMasterToWorker {
