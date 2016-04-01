@@ -28,6 +28,7 @@ import akka.stream.scaladsl.Source
 import akka.testkit.TestActor.{AutoPilot, KeepRunning}
 import akka.testkit.TestProbe
 import com.typesafe.config.{Config, ConfigFactory}
+import io.gearpump.WorkerId
 import io.gearpump.cluster.AppMasterToMaster.{GetAllWorkers, GetMasterData, GetWorkerData, MasterData, WorkerData}
 import io.gearpump.cluster.ClientToMaster.{QueryHistoryMetrics, QueryMasterConfig, ResolveWorkerId, SubmitApplication}
 import io.gearpump.cluster.MasterToAppMaster.{AppMasterData, AppMastersData, AppMastersDataRequest, WorkerList}
@@ -87,9 +88,9 @@ class MasterServiceSpec extends FlatSpec with ScalatestRouteTest with
           sender ! AppMastersData(List.empty[AppMasterData])
           KeepRunning
         case GetAllWorkers =>
-          sender ! WorkerList(List(0))
+          sender ! WorkerList(List(WorkerId(0, 0L)))
           KeepRunning
-        case ResolveWorkerId(0) =>
+        case ResolveWorkerId(WorkerId(0, 0L)) =>
           sender ! ResolveWorkerIdResult(Success(mockWorker.ref))
           KeepRunning
         case QueryHistoryMetrics(path, _, _, _) =>
