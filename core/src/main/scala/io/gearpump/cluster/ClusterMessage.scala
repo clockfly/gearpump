@@ -53,7 +53,7 @@ object ClientToMaster {
   case class ShutdownApplication(appId: Int)
   case class ResolveAppId(appId: Int)
 
-  case class ResolveWorkerId(workerId: Int)
+  case class ResolveWorkerId(workerId: WorkerId)
 
   case object GetJarStoreServer
 
@@ -61,7 +61,7 @@ object ClientToMaster {
 
   case class QueryAppMasterConfig(appId: Int)
 
-  case class QueryWorkerConfig(workerId: Int)
+  case class QueryWorkerConfig(workerId: WorkerId)
 
   case object QueryMasterConfig
 
@@ -144,7 +144,7 @@ object AppMasterToMaster {
     extends AppMasterSummary
 
   case object GetAllWorkers
-  case class GetWorkerData(workerId: Int)
+  case class GetWorkerData(workerId: WorkerId)
   case class WorkerData(workerDescription: WorkerSummary)
 
   case object GetMasterData
