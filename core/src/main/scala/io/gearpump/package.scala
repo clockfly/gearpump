@@ -7,7 +7,16 @@ package object gearpump {
   case class WorkerId(id: Int, registerTime: Long)
 
   object WorkerId {
-    def unspecified: WorkerId = new WorkerId(-1, 0L)
+    val unspecified: WorkerId = new WorkerId(-1, 0L)
+
+    def render(workerId: WorkerId): String = {
+      workerId.registerTime + "_" + workerId.id
+    }
+
+    def parse(str: String): WorkerId = {
+      val pair = str.split("_")
+      new WorkerId(pair(1).toInt, pair(0).toLong)
+    }
 
     implicit val workerIdOrdering: Ordering[WorkerId] = {
       new Ordering[WorkerId] {
