@@ -46,7 +46,8 @@ class CloudFoundryUAAOAuth2AuthenticatorSpec extends FlatSpec with ScalatestRout
     "clientsecret" -> "gearpump_test2",
     "default-userrole" -> "user",
     "icon" -> "/icons/uaa.png",
-    "uaahost" -> serverHost)
+    "uaahost" -> serverHost,
+    "additional-authenticator-enabled" -> "false")
 
   val configString = ConfigFactory.parseMap(configMap.asJava)
 
@@ -61,7 +62,7 @@ class CloudFoundryUAAOAuth2AuthenticatorSpec extends FlatSpec with ScalatestRout
     assert(parameters("response_type") == "code")
     assert(parameters("client_id") == configMap("clientid"))
     assert(parameters("redirect_uri") == configMap("callback"))
-    assert(parameters("scope") == "openid")
+    assert(parameters("scope") == "openid,cloud_controller.read")
   }
 
   it should "authenticate the authorization code and return the correct profile" in {
